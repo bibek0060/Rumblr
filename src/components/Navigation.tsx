@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 
 export default function Navigation() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+  const isLoading = status === 'loading'
 
   return (
     <nav className="bg-white shadow">
@@ -19,7 +20,9 @@ export default function Navigation() {
             <Link href="/communities" className="text-gray-600 hover:text-primary-600">
               Communities
             </Link>
-            {session ? (
+            {isLoading ? (
+              <div className="text-gray-600">Loading...</div>
+            ) : session ? (
               <>
                 <Link href="/profile" className="text-gray-600 hover:text-primary-600">
                   Profile
