@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  image         String?
+  emailVerified DateTime?
+  resetToken    String?   @unique
+  resetTokenExpiry DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  posts         Post[]
+  comments      Comment[]
+  communities   Community[]    @relation("CommunityMembers")
+  moderators    Community[]    @relation("CommunityModerators")
+  votes         Vote[]
+  followers     Follow[]       @relation("Following")
+  following     Follow[]       @relation("Followers")
+  reports       Report[]
+}
+
+model Community {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  rules       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  posts       Post[]
+  members     User[]    @relation("CommunityMembers")
+  moderators  User[]    @relation("CommunityModerators")
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  type        String    // text, link, image, video
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId String
+  comments    Comment[]
+  votes       Vote[]
+  reports     Report[]
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String
+  post      Post      @relation(fields: [postId], references: [id])
+  postId    String
+  parent    Comment?  @relation("CommentToComment", fields: [parentId], references: [id])
+  parentId  String?
+  replies   Comment[] @relation("CommentToComment")
+  votes     Vote[]
+  reports   Report[]
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  value     Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  post      Post?    @relation(fields: [postId], references: [id])
+  postId    String?
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  commentId String?
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+
+  // Relations
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  followerId  String
+  following   User     @relation("Followers", fields: [followingId], references: [id])
+  followingId String
+
+  @@unique([followerId, followingId])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  reason    String
+  status    String   @default("pending") // pending, resolved, dismissed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  reporter  User     @relation(fields: [reporterId], references: [id])
+  reporterId String
+  post      Post?    @relation(fields: [postId], references: [id])
+  postId    String?
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  commentId String?
+} 
