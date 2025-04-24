@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { supabase } from '@/lib/supabase'
 import crypto from 'crypto'
 import { Resend } from 'resend'
 
-const prisma = new PrismaClient()
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: Request) {
@@ -18,11 +17,13 @@ export async function POST(request: Request) {
     }
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { email },
-    })
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single()
 
-    if (!user) {
+    if (error || !user) {
       // Return success even if user doesn't exist to prevent email enumeration
       return NextResponse.json(
         { message: 'If an account exists with this email, you will receive a password reset link.' },
@@ -35,13 +36,17 @@ export async function POST(request: Request) {
     const resetTokenExpiry = new Date(Date.now() + 3600000) // 1 hour from now
 
     // Save reset token to database
-    await prisma.user.update({
-      where: { email },
-      data: {
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
         resetToken,
         resetTokenExpiry,
-      },
-    })
+      })
+      .eq('email', email)
+
+    if (updateError) {
+      throw updateError
+    }
 
     // Send reset email
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`

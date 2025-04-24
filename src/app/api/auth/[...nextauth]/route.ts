@@ -1,14 +1,10 @@
 import { NextAuthOptions } from "next-auth"
 import NextAuth from "next-auth/next"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
+import { supabase } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient()
-
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -21,13 +17,13 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials")
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
+        const { data: user, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', credentials.email)
+          .single()
 
-        if (!user || !user?.password) {
+        if (error || !user) {
           throw new Error("Invalid credentials")
         }
 
@@ -64,25 +60,14 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async jwt({ token, user }) {
-      const dbUser = await prisma.user.findFirst({
-        where: {
-          email: token.email,
-        },
-      })
-
-      if (!dbUser) {
-        if (user) {
-          token.id = user?.id
-        }
-        return token
+      if (user) {
+        token.id = user.id
+        token.name = user.name
+        token.email = user.email
+        token.picture = user.image
       }
 
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-        picture: dbUser.image,
-      }
+      return token
     }
   }
 }
