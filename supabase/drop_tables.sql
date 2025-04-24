@@ -1,0 +1,10 @@
+-- Drop tables in the correct order to handle dependencies
+DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS follows CASCADE;
+DROP TABLE IF EXISTS votes CASCADE;
+DROP TABLE IF EXISTS comments CASCADE;
+DROP TABLE IF EXISTS posts CASCADE;
+DROP TABLE IF EXISTS community_moderators CASCADE;
+DROP TABLE IF EXISTS community_members CASCADE;
+DROP TABLE IF EXISTS communities CASCADE;
+DROP TABLE IF EXISTS users CASCADE; 
