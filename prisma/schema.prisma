@@ -63,6 +63,7 @@ model Post {
   comments    Comment[]
   votes       Vote[]
   reports     Report[]
+  tags        Tag[]     @relation("PostTags")
 }
 
 model Comment {
@@ -127,4 +128,14 @@ model Report {
   postId    String?
   comment   Comment? @relation(fields: [commentId], references: [id])
   commentId String?
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  posts     Post[]   @relation("PostTags")
 } 
