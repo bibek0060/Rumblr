@@ -1,78 +1,84 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { SearchBar } from '@/components/SearchBar'
+import { Button } from '@/components/ui/button'
+import { Home, Plus, User, MessageSquare, Users, Bell } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+const navigation = [
+  { name: 'Home', href: '/', icon: Home },
+  { name: 'Create', href: '/create-post', icon: Plus },
+  { name: 'Messages', href: '/messages', icon: MessageSquare },
+  { name: 'Communities', href: '/communities', icon: Users },
+  { name: 'Profile', href: '/profile', icon: User },
+  { name: 'Notifications', href: '/notifications', icon: Bell },
+]
 
 export default function Navigation() {
-  // This would typically come from your auth context/state
-  const isSignedIn = false; // Change this to true to test the signed-in state
+  const pathname = usePathname()
+  const [notificationCount, setNotificationCount] = useState(0)
+
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await fetch('/api/notifications')
+        if (response.ok) {
+          const notifications = await response.json()
+          const unreadCount = notifications.filter((n: any) => !n.read).length
+          setNotificationCount(unreadCount)
+        }
+      } catch (error) {
+        console.error('Failed to fetch notification count:', error)
+      }
+    }
+
+    fetchNotificationCount()
+  }, [])
 
   return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-12">
-          {/* Left Section */}
-          <div className="flex items-center space-x-4">
-            {/* Logo/Home Button */}
-            <Link href="/" className="flex items-center">
-              <span className="font-bold text-gray-900">RUMBLR</span>
-            </Link>
-            
-            {/* Search Bar */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search Rumblr"
-                className="w-96 pl-10 pr-4 py-1.5 bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent text-sm"
-              />
-              <span className="absolute left-3 top-2 text-gray-400">🔍</span>
-            </div>
-          </div>
+    <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between h-16">
+        {/* Logo */}
+        <div className="flex-shrink-0">
+          <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
+            Rumblr
+          </Link>
+        </div>
 
-          {/* Center Section */}
-          <div className="flex items-center space-x-4">
-            <Link href="/popular" className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 text-sm">
-              <span className="text-lg">🔥</span>
-              <span>Popular</span>
-            </Link>
-            <Link href="/latest" className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 text-sm">
-              <span className="text-lg">🕒</span>
-              <span>Latest</span>
-            </Link>
-            <Link href="/communities" className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 text-sm">
-              <span className="text-lg">👥</span>
-              <span>Communities</span>
-            </Link>
-          </div>
+        {/* Search Bar - Only visible on desktop */}
+        <div className="hidden md:block flex-1 max-w-2xl mx-8">
+          <SearchBar />
+        </div>
 
-          {/* Right Section */}
-          <div className="flex items-center space-x-4">
-            <Link href="/create-post" className="bg-orange-500 text-white px-4 py-1.5 rounded-full hover:bg-orange-600 transition-colors text-sm font-medium">
-              Create Post
-            </Link>
-            <Link href="/notifications" className="relative text-gray-600 hover:text-gray-900">
-              <span className="text-lg">🔔</span>
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
-            </Link>
-            <Link href="/messages" className="relative text-gray-600 hover:text-gray-900">
-              <span className="text-lg">✉️</span>
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
-            </Link>
-            {isSignedIn ? (
-              <Link href="/profile" className="flex items-center space-x-2">
-                <div className="w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                  U
-                </div>
-                <span className="text-gray-700 font-medium text-sm">User Name</span>
+        {/* Navigation Links */}
+        <div className="flex items-center space-x-1">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors relative',
+                  isActive
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                )}
+                title={item.name}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name === 'Notifications' && notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {notificationCount}
+                  </span>
+                )}
+                <span className="sr-only md:not-sr-only md:ml-2">{item.name}</span>
               </Link>
-            ) : (
-              <>
-                <Link href="/login" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
-                  Login
-                </Link>
-                <Link href="/signup" className="bg-orange-500 text-white px-4 py-1.5 rounded-full hover:bg-orange-600 transition-colors text-sm font-medium">
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
+            )
+          })}
         </div>
       </div>
     </nav>

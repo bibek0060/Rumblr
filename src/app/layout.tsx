@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Navigation from '../components/Navigation'
 import Providers from '@/components/Providers'
+import NavigationWrapper from '@/components/NavigationWrapper'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
   title: 'Rumblr',
@@ -17,13 +20,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${inter.variable} font-sans antialiased bg-gray-50 text-gray-900`}>
         <Providers>
-          <Navigation />
-          <main className="min-h-screen bg-gray-50">
-            {children}
-          </main>
+          <NavigationWrapper>{children}</NavigationWrapper>
         </Providers>
       </body>
     </html>

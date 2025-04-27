@@ -1,295 +1,179 @@
-import CreateHashtag from '@/components/CreateHashtag'
+'use client'
 
-export default function Feed() {
-  // This would typically come from your auth context/state
-  const isSignedIn = false; // Change this to true to test the signed-in state
+import { useState, useEffect } from 'react'
+import { PostCard } from '@/components/PostCard'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Plus, TrendingUp, Users, Star, Search } from 'lucide-react'
+import Link from 'next/link'
+
+interface Post {
+  id: string
+  title: string
+  content: string
+  author: {
+    name: string
+    image: string | null
+  }
+  community?: {
+    name: string
+    image: string | null
+  }
+  votes: number
+  comments: number
+  createdAt: string
+}
+
+export default function HomePage() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch('/api/posts')
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts')
+        }
+        const data = await response.json()
+        setPosts(Array.isArray(data) ? data : [])
+      } catch (error) {
+        console.error('Error fetching posts:', error)
+        setError('Failed to load posts. Please try again later.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPosts()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main Layout */}
-      <div className="flex">
-        {/* Left Sidebar */}
-        <div className="w-72 min-h-screen bg-white border-r border-gray-200 p-6">
-          {/* Navigation Menu */}
-          <nav className="space-y-2">
-            <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-              <span className="text-xl">🏠</span>
-              <span>Home</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-              <span className="text-xl">🔖</span>
-              <span>Bookmarks</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-              <span className="text-xl">👥</span>
-              <span>Communities</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-              <span className="text-xl">⚙️</span>
-              <span>Settings</span>
-            </a>
-          </nav>
-
-          {/* Topics Dropdown */}
-          <div className="mt-8">
-            <details className="group">
-              <summary className="flex items-center justify-between p-3 rounded-xl cursor-pointer hover:bg-orange-50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <span className="text-xl">📚</span>
-                  <span className="font-medium text-gray-700">Topics</span>
-                </div>
-                <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="mt-2 space-y-1">
-                <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                  <span className="text-xl">💻</span>
-                  <span>Technology</span>
-                </a>
-                <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                  <span className="text-xl">🎮</span>
-                  <span>Gaming</span>
-                </a>
-                <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                  <span className="text-xl">🎬</span>
-                  <span>Movies</span>
-                </a>
-                <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                  <span className="text-xl">🎵</span>
-                  <span>Music</span>
-                </a>
-                <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                  <span className="text-xl">📚</span>
-                  <span>Books</span>
-                </a>
-                <a href="#" className="flex items-center space-x-3 text-gray-700 p-3 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                  <span className="text-xl">🏃</span>
-                  <span>Sports</span>
-                </a>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main content */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Search and Create Post */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search posts..."
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
-            </details>
+              <Button 
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                onClick={() => window.location.href = '/create-post'}
+              >
+                <Plus className="h-5 w-5" />
+                Create Post
+              </Button>
+            </div>
+
+            {/* Posts feed */}
+            {isLoading ? (
+              <div className="space-y-6">
+                {[...Array(5)].map((_, i) => (
+                  <Card key={i} className="animate-pulse border-0 shadow-sm">
+                    <CardContent className="p-6">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : error ? (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-6">
+                  <p className="text-red-500">{error}</p>
+                </CardContent>
+              </Card>
+            ) : posts.length === 0 ? (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-6 text-center">
+                  <p className="text-gray-500">No posts yet. Be the first to create one!</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {posts.map((post) => (
+                  <PostCard key={post.id} {...post} />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Create Hashtag Form */}
-          {isSignedIn && (
-            <div className="mt-8">
-              <CreateHashtag />
-            </div>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            {/* Feed Posts */}
-            <div className="space-y-6">
-              {/* Sample Post 1 */}
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                {/* Post Header */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        J
+          {/* Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Trending Communities */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center text-lg font-semibold">
+                  <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
+                  Trending Communities
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-gray-400" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-800">John Doe</h3>
-                        <p className="text-sm text-gray-500">Posted by u/johndoe • 2 hours ago</p>
+                        <Link href={`/r/community${i + 1}`} className="font-medium hover:text-blue-500">
+                          r/community{i + 1}
+                        </Link>
+                        <div className="text-sm text-gray-500">1.2k members</div>
                       </div>
                     </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <span className="text-xl">⋮</span>
-                    </button>
-                  </div>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Post Content */}
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                    Just finished building my first Next.js application!
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    The developer experience is amazing. The hot reloading and TypeScript support make development so much smoother.
-                  </p>
-                  {/* Post Image */}
-                  <div className="mb-4 rounded-xl overflow-hidden">
-                    <img 
-                      src="https://via.placeholder.com/600x400" 
-                      alt="Post image" 
-                      className="w-full hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  {/* Post Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <a href="/tag/nextjs" className="bg-orange-100 text-orange-700 text-sm px-3 py-1 rounded-full hover:bg-orange-200 transition-colors">#nextjs</a>
-                    <a href="/tag/webdev" className="bg-orange-100 text-orange-700 text-sm px-3 py-1 rounded-full hover:bg-orange-200 transition-colors">#webdev</a>
-                    <a href="/tag/coding" className="bg-orange-100 text-orange-700 text-sm px-3 py-1 rounded-full hover:bg-orange-200 transition-colors">#coding</a>
-                  </div>
+            {/* Popular Tags */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center text-lg font-semibold">
+                  <Star className="h-5 w-5 mr-2 text-blue-500" />
+                  Popular Tags
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {['Technology', 'Gaming', 'Science', 'Art', 'Music', 'Sports'].map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/tags/${tag.toLowerCase()}`}
+                      className="px-3 py-1.5 bg-gray-100 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      #{tag}
+                    </Link>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Post Actions */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6">
-                      <div className="flex items-center space-x-2">
-                        <button className="p-2 hover:bg-orange-100 rounded-full text-gray-500 hover:text-orange-500">
-                          <span className="text-xl">⬆️</span>
-                        </button>
-                        <span className="font-medium text-gray-700">1.2k</span>
-                        <button className="p-2 hover:bg-orange-100 rounded-full text-gray-500 hover:text-orange-500">
-                          <span className="text-xl">⬇️</span>
-                        </button>
-                      </div>
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-orange-500">
-                        <span className="text-xl">💬</span>
-                        <span>245 Comments</span>
-                      </button>
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-orange-500">
-                        <span className="text-xl">🔄</span>
-                        <span>Share</span>
-                      </button>
-                    </div>
-                    <button className="text-gray-500 hover:text-orange-500">
-                      <span className="text-xl">🔖</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sample Post 2 */}
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                {/* Post Header */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        J
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">Jane Smith</h3>
-                        <p className="text-sm text-gray-500">Posted by u/janesmith • 5 hours ago</p>
-                      </div>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <span className="text-xl">⋮</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Post Content */}
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-3">
-                    Excited to share my latest project!
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    Check out the new features I've added to my latest project. Would love to hear your thoughts and suggestions!
-                  </p>
-                  {/* Post Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <a href="/tag/project" className="bg-orange-100 text-orange-700 text-sm px-3 py-1 rounded-full hover:bg-orange-200 transition-colors">#project</a>
-                    <a href="/tag/showcase" className="bg-orange-100 text-orange-700 text-sm px-3 py-1 rounded-full hover:bg-orange-200 transition-colors">#showcase</a>
-                  </div>
-                </div>
-
-                {/* Post Actions */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6">
-                      <div className="flex items-center space-x-2">
-                        <button className="p-2 hover:bg-orange-100 rounded-full text-gray-500 hover:text-orange-500">
-                          <span className="text-xl">⬆️</span>
-                        </button>
-                        <span className="font-medium text-gray-700">856</span>
-                        <button className="p-2 hover:bg-orange-100 rounded-full text-gray-500 hover:text-orange-500">
-                          <span className="text-xl">⬇️</span>
-                        </button>
-                      </div>
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-orange-500">
-                        <span className="text-xl">💬</span>
-                        <span>128 Comments</span>
-                      </button>
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-orange-500">
-                        <span className="text-xl">🔄</span>
-                        <span>Share</span>
-                      </button>
-                    </div>
-                    <button className="text-gray-500 hover:text-orange-500">
-                      <span className="text-xl">🔖</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Sidebar */}
-        <div className="w-80 min-h-screen bg-white border-l border-gray-200 p-6">
-          {/* Trending Topics */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Trending Topics</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🔥</span>
-                  <div>
-                    <p className="font-medium text-gray-800">#nextjs</p>
-                    <p className="text-sm text-gray-500">1.2k posts</p>
-                  </div>
-                </div>
-                <button className="text-orange-500 hover:text-orange-600">Follow</button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🚀</span>
-                  <div>
-                    <p className="font-medium text-gray-800">#webdev</p>
-                    <p className="text-sm text-gray-500">856 posts</p>
-                  </div>
-                </div>
-                <button className="text-orange-500 hover:text-orange-600">Follow</button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">💻</span>
-                  <div>
-                    <p className="font-medium text-gray-800">#coding</p>
-                    <p className="text-sm text-gray-500">2.3k posts</p>
-                  </div>
-                </div>
-                <button className="text-orange-500 hover:text-orange-600">Follow</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Suggested Users */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Suggested Users</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    A
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">Alice Johnson</p>
-                    <p className="text-sm text-gray-500">@alicej</p>
-                  </div>
-                </div>
-                <button className="text-orange-500 hover:text-orange-600">Follow</button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    B
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">Bob Wilson</p>
-                    <p className="text-sm text-gray-500">@bobw</p>
-                  </div>
-                </div>
-                <button className="text-orange-500 hover:text-orange-600">Follow</button>
-              </div>
-            </div>
+            {/* About */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center text-lg font-semibold">
+                  <Users className="h-5 w-5 mr-2 text-blue-500" />
+                  About Rumblr
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Rumblr is a platform for sharing and discussing content with communities of people who share your interests.
+                </p>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">Create Community</Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
